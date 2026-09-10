@@ -33,3 +33,7 @@ jobs:
             main.js
             styles.css
             manifest.json
+
+      - name: Comment on success
+        if: success()
+        run: echo "✅ Build passed"
