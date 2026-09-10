@@ -9,6 +9,18 @@ export class PetAnimator {
   /** 基准 Y 值（idle 浮动的起点） */
   private baseY: number = 0;
 
+  /**
+   * 最近一帧的 elapsed（由 update() 写入）。
+   *
+   * 点击反馈是在外部的指针事件里触发的，那里拿不到渲染循环的 elapsed。
+   * 早期实现传的是 `performance.now() / 1000`（**页面加载**至今的秒数），
+   * 而本类的 elapsed 来自 `THREE.Clock`（**场景创建**至今的秒数）——
+   * 两个时间基准不同源，`elapsed - clickStartAt` 恒为负数，
+   * 于是点击脉冲 / 开心表情 / 天线弹跳全都不收敛（天线小球会被甩到视野外）。
+   * 现在统一以本字段为准，触发方法不再接收时间参数。
+   */
+  private lastElapsed: number = 0;
+
   /** 眨眼相关 */
   private nextBlinkAt: number = 2;
   private blinkProgress: number = -1; // -1 表示当前未在眨眼
@@ -54,10 +66,16 @@ export class PetAnimator {
     this.tiltTarget = Math.max(-0.3, Math.min(0.3, t));
   }
 
-  /** 触发点击反馈 */
-  triggerClickFeedback(nowSeconds: number): string {
-    this.clickStartAt = nowSeconds;
-    this.happyModeUntil = nowSeconds + this.happyModeDuration;
+  /**
+   * 触发点击反馈。
+   *
+   * 时间基准取 `lastElapsed`（最近一帧的渲染循环 elapsed），
+   * 不要传 `performance.now()`，两者不同源会导致反馈动画永不收敛。
+   */
+  triggerClickFeedback(): string {
+    const now = this.lastElapsed;
+    this.clickStartAt = now;
+    this.happyModeUntil = now + this.happyModeDuration;
 
     // 随机台词
     const idx = Math.floor(Math.random() * PetAnimator.PHRASES.length);
@@ -68,6 +86,8 @@ export class PetAnimator {
 
   /** 每帧调用 */
   update(delta: number, elapsed: number): void {
+    this.lastElapsed = elapsed;
+
     const { group, head, leftArm, rightArm, leftEye, rightEye, leftPupil, rightPupil, antennaTip } = this.model;
 
     // --- 眨眼逻辑 ---
@@ -101,12 +121,18 @@ export class PetAnimator {
       rightPupil.scale.set(1, 1, 1);
     }
 
+    // --- 拖动倾角：每帧都朝目标平滑趋近 ---
+    // 松手后 setDragTilt(0) 会把目标置 0，这里持续收敛即可自动回正，
+    // 不能再把赋值写在 dragging 分支里，否则倾角会永久残留。
+    this.tiltCurrent += (this.tiltTarget - this.tiltCurrent) * Math.min(1, delta * 8);
+    group.rotation.z = this.tiltCurrent;
+
     // --- idle 动画：整体浮动 + 左右摇摆 ---
     if (!this.dragging) {
       group.position.y = this.baseY + Math.sin(elapsed * 1.5) * 0.1;
       group.rotation.y = Math.sin(elapsed * 0.8) * 0.15;
-      // 头部轻微摆动
-      head.rotation.z = Math.sin(elapsed * 1.2) * 0.05;
+      // 头部轻微摆动（叠加残余倾角，使松手后平滑过渡回正）
+      head.rotation.z = Math.sin(elapsed * 1.2) * 0.05 + this.tiltCurrent * 0.5;
       head.rotation.x = Math.sin(elapsed * 0.7) * 0.04;
       // 手臂自然摆动
       this.armPhase += delta;
@@ -115,9 +141,7 @@ export class PetAnimator {
       // 天线小球轻微晃动
       antennaTip.rotation.z = Math.sin(elapsed * 2) * 0.08;
     } else {
-      // 拖动中：暂停摇摆，应用倾角
-      this.tiltCurrent += (this.tiltTarget - this.tiltCurrent) * Math.min(1, delta * 8);
-      group.rotation.z = this.tiltCurrent;
+      // 拖动中：暂停摇摆，头部跟随倾角
       head.rotation.z = this.tiltCurrent * 0.5;
     }
 
@@ -131,9 +155,8 @@ export class PetAnimator {
       this.clickStartAt = -1;
     }
 
-    // 应用缩放（与外部 setPetScale 组合，取乘积）
-    const externalScale = group.userData.baseScale ?? 1;
-    group.scale.setScalar(externalScale * scalePulse);
+    // 应用点击脉冲缩放（宠物整体尺寸由容器 / canvas 尺寸控制，模型保持 1:1）
+    group.scale.setScalar(scalePulse);
 
     // 点击反馈时天线弹跳
     if (this.clickStartAt >= 0) {
@@ -141,11 +164,5 @@ export class PetAnimator {
     } else {
       antennaTip.position.y = 0.78;
     }
-  }
-
-  /** 保存外部设定的基准缩放（避免脉冲覆盖） */
-  setBaseScale(scale: number): void {
-    this.model.group.userData.baseScale = scale;
-    this.model.group.scale.setScalar(scale);
   }
 }

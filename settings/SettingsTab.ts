@@ -36,6 +36,10 @@ const COLOR_PRESETS: Array<{ label: string; value: string }> = [
 
 /**
  * 插件设置面板。
+ *
+ * 约定：这里只负责「改 this.plugin.settings 的值」+ 调用
+ * `plugin.updateSettings()`，由主插件负责生效与（防抖）落盘。
+ * 不要在这里直接 `saveSettings()`，否则每次改动都会写盘两次。
  */
 export class SettingsTab extends PluginSettingTab {
   /** 主插件实例引用 */
@@ -58,28 +62,30 @@ export class SettingsTab extends PluginSettingTab {
       .setDesc('是否显示悬浮宠物（可通过状态栏图标切换）')
       .addToggle((t) =>
         t.setValue(this.plugin.settings.enabled)
-          .onChange(async (v) => {
+          .onChange((v) => {
             this.plugin.settings.enabled = v;
-            await this.plugin.saveSettings();
             this.plugin.updateSettings(this.plugin.settings);
           })
       );
 
     // ---- 宠物大小 ----
-    new Setting(containerEl)
+    // 不要在 onChange 里调 this.display()：Obsidian 的滑块是连续的 input 事件，
+    // 重建整个面板会让滑块在拖动途中被销毁重建，表现为「拖一格就断」。
+    // 需要刷新文案时就地改 setDesc 即可。
+    const sizeSetting = new Setting(containerEl)
       .setName('宠物大小')
-      .setDesc(`当前倍率：${this.plugin.settings.petSize.toFixed(2)}x`)
-      .addSlider((s) =>
-        s.setLimits(0.5, 2.0, 0.05)
-          .setValue(this.plugin.settings.petSize)
-          .setDynamicTooltip()
-          .onChange(async (v: number) => {
-            this.plugin.settings.petSize = v;
-            await this.plugin.saveSettings();
-            this.plugin.updateSettings(this.plugin.settings);
-            this.display();
-          })
-      );
+      .setDesc(`当前倍率：${this.plugin.settings.petSize.toFixed(2)}x`);
+
+    sizeSetting.addSlider((s) =>
+      s.setLimits(0.5, 2.0, 0.05)
+        .setValue(this.plugin.settings.petSize)
+        .setDynamicTooltip()
+        .onChange((v: number) => {
+          this.plugin.settings.petSize = v;
+          this.plugin.updateSettings(this.plugin.settings);
+          sizeSetting.setDesc(`当前倍率：${v.toFixed(2)}x`);
+        })
+    );
 
     // ---- 主色选择 ----
     new Setting(containerEl)
@@ -91,9 +97,8 @@ export class SettingsTab extends PluginSettingTab {
         if (!COLOR_PRESETS.some((p) => p.value === this.plugin.settings.color)) {
           d.addOption(this.plugin.settings.color, `当前 ${this.plugin.settings.color}`);
         }
-        d.setValue(this.plugin.settings.color).onChange(async (v) => {
+        d.setValue(this.plugin.settings.color).onChange((v) => {
           this.plugin.settings.color = v;
-          await this.plugin.saveSettings();
           this.plugin.updateSettings(this.plugin.settings);
         });
       });
@@ -101,34 +106,30 @@ export class SettingsTab extends PluginSettingTab {
     // ---- 位置 X ----
     new Setting(containerEl)
       .setName('位置 X（像素）')
-      .setDesc('宠物左上角相对窗口左侧的像素距离')
+      .setDesc('宠物左上角相对窗口左侧的距离（超出窗口会自动收敛到可视区内）')
       .addText((t) =>
         t.setPlaceholder('0')
           .setValue(String(this.plugin.settings.positionX))
-          .onChange(async (v) => {
+          .onChange((v) => {
             const n = Number.parseInt(v, 10);
-            if (!Number.isNaN(n)) {
-              this.plugin.settings.positionX = n;
-              await this.plugin.saveSettings();
-              this.plugin.updateSettings(this.plugin.settings);
-            }
+            if (Number.isNaN(n)) return;
+            this.plugin.settings.positionX = n;
+            this.plugin.updateSettings(this.plugin.settings);
           })
       );
 
     // ---- 位置 Y ----
     new Setting(containerEl)
       .setName('位置 Y（像素）')
-      .setDesc('宠物左上角相对窗口顶部的像素距离')
+      .setDesc('宠物左上角相对窗口顶部的距离（超出窗口会自动收敛到可视区内）')
       .addText((t) =>
         t.setPlaceholder('0')
           .setValue(String(this.plugin.settings.positionY))
-          .onChange(async (v) => {
+          .onChange((v) => {
             const n = Number.parseInt(v, 10);
-            if (!Number.isNaN(n)) {
-              this.plugin.settings.positionY = n;
-              await this.plugin.saveSettings();
-              this.plugin.updateSettings(this.plugin.settings);
-            }
+            if (Number.isNaN(n)) return;
+            this.plugin.settings.positionY = n;
+            this.plugin.updateSettings(this.plugin.settings);
           })
       );
 
@@ -139,11 +140,11 @@ export class SettingsTab extends PluginSettingTab {
       .addButton((b) =>
         b.setButtonText('恢复默认')
           .setWarning()
-          .onClick(async () => {
+          .onClick(() => {
             this.plugin.settings = { ...DEFAULT_SETTINGS };
-            await this.plugin.saveSettings();
             this.plugin.updateSettings(this.plugin.settings);
             new Notice('已恢复默认设置');
+            // 一次性按钮，重建面板无副作用（这里不受滑块连续事件影响）
             this.display();
           })
       );

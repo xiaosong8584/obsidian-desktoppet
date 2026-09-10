@@ -61,6 +61,9 @@ export function createPetModel(palette: PetModelPalette): PetModelParts {
     metalness: 0.15,
     flatShading: false
   });
+  // 打标记：PetScene.applyColor() 只替换带这个标记的材质，
+  // 不再靠颜色值去猜"哪个是主色材质"（那种启发式会失效且不可逆）
+  primaryMat.userData.isPrimary = true;
   // 辅色材质（白色机身）
   const secondaryMat = new THREE.MeshStandardMaterial({
     color: secondaryColor,
@@ -257,12 +260,17 @@ export function createPetModel(palette: PetModelPalette): PetModelParts {
  * 释放模型内所有几何体与材质，避免显存泄漏。
  */
 export function disposePetModel(parts: PetModelParts): void {
+  // 材质在多个 mesh 之间共享，先收集到 Set 去重，最后只 dispose 一次
+  const materials = new Set<THREE.Material>();
+
   parts.group.traverse((obj) => {
     if (obj instanceof THREE.Mesh) {
       obj.geometry.dispose();
       const mat = obj.material;
-      if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-      else mat.dispose();
+      if (Array.isArray(mat)) mat.forEach((m) => materials.add(m));
+      else materials.add(mat);
     }
   });
+
+  materials.forEach((m) => m.dispose());
 }

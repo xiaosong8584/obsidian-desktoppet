@@ -31,7 +31,7 @@
 ### Design Principles
 
 - **Minimalist**: at most 2 primary colors, soft palette, never overpowers your content
-- **Non-intrusive**: outer container uses `pointer-events: none`; only the pet body is interactive, everything else lets mouse events pass through
+- **Non-intrusive**: outer container uses `pointer-events: none`; only the pet body is interactive, everything else lets pointer events pass through
 - **Effortless**: install and use immediately — no manual model, texture, or animation file configuration
 
 ---
@@ -40,7 +40,7 @@
 
 | Feature | Description |
 |---|---|
-| 🎨 **3D Cartoon Robot** | Rounded head + dot eyes (with highlights) + antenna + chest core + blush, 17 procedurally generated geometry pieces |
+| 🎨 **3D Cartoon Robot** | Rounded head + dot eyes (with highlights) + antenna + chest core + blush, 25 procedurally generated geometry pieces |
 | 🖱️ **Drag & Click** | Drag to reposition; click to trigger a scale pulse + happy squint + speech bubble with a random line |
 | 💤 **Idle Animation** | Breathing float, side sway, blinking (random 2.5~6s), arm sway, antenna wiggle |
 | 🎭 **5 Color Themes** | Soft Blue, Mint Green, Coral Pink, Lavender, Warm Orange — one-click switch |
@@ -49,7 +49,7 @@
 | 🎚️ **Status Bar Icon** | One-click show/hide from the bottom-right status bar, or use the Command Palette |
 | 🔌 **Fully Transparent Background** | Outer container `pointer-events: none`; never blocks Obsidian content |
 | ♻️ **Full Lifecycle Management** | Releases renderer / geometry / material / rAF / events on unload — no memory leaks |
-| 💬 **10 Random Phrases** | "Hi~", "Hello!", "Missed me?", "Keep going today~", etc. — triggered on click |
+| 💬 **10 Random Phrases** | Chinese one-liners such as "你好~" (Hi~) and "想我了吗?" (Missed me?) — triggered on click |
 
 ---
 
@@ -131,9 +131,9 @@ Once the project is published to the Obsidian community plugin marketplace, you'
 
 ### Dragging the Pet
 
-- **Hold the mouse button** on the pet body (don't click on empty space)
+- **Hold** on the pet body (left mouse button or finger; don't press on empty space)
 - **Drag to any position** — the pet stays where you release
-- During dragging, the pet **tilts slightly** (following mouse velocity) and straightens when released
+- During dragging, the pet **tilts slightly** (following pointer velocity) and straightens when released
 
 > **Tip**: A drag distance < 5px is treated as a "click" rather than a "drag".
 
@@ -151,7 +151,7 @@ The bubble auto-dismisses after 2.2 seconds.
 Three ways — pick any:
 
 1. **Status bar**: a small robot icon in the bottom-right corner of Obsidian — click to toggle
-2. **Command Palette**: `Ctrl+Shift+P` (Mac: `Cmd+Shift+P`) → search `Show/Hide Pet`
+2. **Command Palette**: `Ctrl+P` (Mac: `Cmd+P`) → search `Show/Hide Pet`
 3. **Settings panel**: Settings → Community plugins → Desktop Pet → "Enabled" toggle
 
 ### Adjusting Pet Position (Without Dragging)
@@ -161,7 +161,7 @@ Settings panel → Desktop Pet:
 - **Position X**: pixels from the window's left edge to the pet's top-left corner
 - **Position Y**: pixels from the window's top edge to the pet's top-left corner
 
-Default: `(20, 20)` (near the top-left corner).
+Default: `(20, 200)` (left side, upper area).
 
 ---
 
@@ -173,7 +173,7 @@ Open **Settings → Community plugins → Desktop Pet**:
 
 | Setting | Type | Description |
 |---|---|---|
-| **Enabled** | Toggle | Whether the pet is shown. When off, the pet is fully hidden and all resources are released |
+| **Enabled** | Toggle | Whether the pet is shown. When off, the pet is fully hidden and the render loop is paused (no GPU usage) |
 
 ### Appearance
 
@@ -188,16 +188,16 @@ Open **Settings → Community plugins → Desktop Pet**:
 |---|---|---|
 | Soft Blue | 🔵 | `#4A90D9` |
 | Mint Green | 🟢 | `#4ECDC4` |
-| Coral Pink | 🩷 | `#FF8A80` |
-| Lavender | 🟣 | `#A78BFA` |
-| Warm Orange | 🟠 | `#F59E0B` |
+| Coral Pink | 🩷 | `#F28B82` |
+| Lavender | 🟣 | `#9B8CE5` |
+| Warm Orange | 🟠 | `#F2B263` |
 
 ### Position
 
 | Setting | Type | Description |
 |---|---|---|
-| **Position X** | Number | Pixels from window's left edge (0 ~ screen width) |
-| **Position Y** | Number | Pixels from window's top edge (0 ~ screen height) |
+| **Position X** | Number | Pixels from the window's left edge. Values outside the window are clamped back into view |
+| **Position Y** | Number | Pixels from the window's top edge. Values outside the window are clamped back into view |
 
 ### Reset to Defaults
 
@@ -206,7 +206,7 @@ Click **Reset to Defaults** to restore all settings:
 - Show: Enabled
 - Size: 1.0x
 - Color: Soft Blue
-- Position: (20, 20)
+- Position: (20, 200)
 
 ---
 
@@ -214,8 +214,8 @@ Click **Reset to Defaults** to restore all settings:
 
 | Action | Shortcut |
 |---|---|
-| Show / Hide Pet | `Ctrl+Shift+P` → search `Show/Hide Pet` |
-| Open Settings | `Ctrl+P` → `Open settings` → search `Desktop Pet` |
+| Show / Hide Pet | `Ctrl+P` → search `Show/Hide Pet` |
+| Open Settings | `Ctrl+,` → search `Desktop Pet` |
 | Toggle Plugin | Click the small robot icon in the status bar |
 
 > **Note**: The project doesn't bind a direct shortcut (like `Ctrl+D`) to avoid conflicts with other plugins. To customize, go to Obsidian's **Hotkeys** settings and search `Show/Hide Pet`.
@@ -230,18 +230,18 @@ Click **Reset to Defaults** to restore all settings:
 
 1. Settings → Desktop Pet → is the **Enabled** toggle on?
 2. Are you in **Reading View / Full-screen mode**? The pet may not show in reader tabs — switch back to edit mode
-3. Is the position off-screen? Set both Position X / Y to `20`
+3. Is the position pinned against a window edge? It is clamped into view automatically, so it shouldn't end up off-screen — click **Reset to Defaults** in the settings panel to restore it
 4. Open Obsidian's dev tools (`Ctrl+Shift+I`) and check the Console for red errors
 
 ### Q2: The pet blocks my content?
 
 - **Shrink**: Settings → Pet Size → drag to 0.5x
 - **Move it**: Just drag the pet to a non-blocking position
-- **Hide it**: Status bar icon or `Ctrl+Shift+P` → `Show/Hide Pet`
+- **Hide it**: Status bar icon or `Ctrl+P` → `Show/Hide Pet`
 
-### Q3: The pet doesn't follow the mouse accurately when dragging?
+### Q3: The pet doesn't follow the pointer accurately when dragging?
 
-During dragging, the mouse button must **stay held**. If you release and click again, it becomes a "click" instead of "continuing to drag". Drag distance < 5px is treated as a click.
+While dragging the button must **stay held** (left mouse button down, or finger on the screen). If you release and press again, it becomes a "click" instead of "continuing to drag". Drag distance < 5px is treated as a click.
 
 ### Q4: The speech bubble is cut off at the top of the window?
 
@@ -249,13 +249,15 @@ The bubble displays above the pet container. If the pet's Position Y is too smal
 
 ### Q5: The pet doesn't change color after switching the primary color?
 
-Color replacement uses a heuristic: "anything that isn't white, dark, or blush is treated as the primary color". The current model has no extra accent colors, so the switch should be immediate. If it doesn't work, you may have modified the pet code without rebuilding — run `npm run build` again.
+Color replacement only touches the materials the model has **tagged as primary** (`material.userData.isPrimary`); the white shell, dark details and blush are never affected. Switching the dropdown takes effect **immediately** — no plugin reload needed.
+
+If nothing happens, you probably edited the pet code without rebuilding — run `npm run build` again and reload the plugin.
 
 ### Q6: The pet looks weird after switching light/dark theme?
 
 Theme switching affects:
 
-- Speech bubble background (`--background-primary` CSS variable)
+- Speech bubble background (`--background-secondary` CSS variable)
 - Shadow color (`--background-modifier-border`)
 - The pet body color **does not** change with theme (controlled by primary color)
 
@@ -274,29 +276,29 @@ The pet uses an **independent DOM layer** (attached to `document.body`), unaffec
 Currently only one robot model exists (procedural geometry combination). **Future expansion directions** include multiple robot shapes (sphere / cube / humanoid). To modify the code:
 
 - Edit the `createPetModel()` function in `pet/PetModel.ts`
-- Keep the `PetModelParts` interface unchanged (must expose `group`, `eyes`, `mouth`, `armL`, `armR`, `antenna`)
+- Keep the `PetModelParts` interface unchanged (must expose `group`, `head`, `body`, `leftArm`, `rightArm`, `leftEye`, `rightEye`, `leftPupil`, `rightPupil`, `antennaTip`)
 - Rebuild with `npm run build`
 
 ### Q9: Can I customize the speech phrases?
 
-Yes. Phrases are hardcoded in the `PHRASES` array in `pet/PetInteraction.ts`:
+Yes. Phrases are hardcoded in the `PHRASES` field of the `PetAnimator` class in `pet/PetAnimator.ts` (`private static readonly`). They are currently **Chinese only**:
 
 ```typescript
-const PHRASES = [
-  'Hi~',
-  'Hello!',
-  'Missed me?',
-  'Keep going today~',
-  'You there?',
-  'Slacking off...',
-  'Time to rest~',
-  'Keep at it!',
-  "I'm here~",
-  'Call me if you need anything'
+private static readonly PHRASES: readonly string[] = [
+  '你好~',               // Hi~
+  '嗨!',                 // Hello!
+  '今天也要加油哦~',       // Keep going today~
+  '嘿嘿，被你发现啦~',     // Hehe, you found me~
+  '我在呢~',              // I'm here~
+  '想我了吗?',            // Missed me?
+  '陪我玩一会儿嘛~',       // Play with me for a while~
+  '✨ 有灵感了吗?',        // ✨ Got any inspiration?
+  '休息一下眼睛吧~',       // Give your eyes a rest~
+  '继续写下去，我陪你~'    // Keep writing, I'll stay with you~
 ];
 ```
 
-Edit the array directly, add your phrases, and rebuild.
+Edit the array directly, add your phrases, and rebuild. To localize the pet, simply replace the strings.
 
 ### Q10: Why isn't my pet blinking?
 

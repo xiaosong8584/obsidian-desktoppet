@@ -21,6 +21,8 @@ const opts = {
   outfile: 'main.js',
   sourcemap: prod ? false : 'inline',
   treeShaking: true,
+  // 生产构建压缩；开发构建保持可读（合法注释如 three.js 的 MIT 声明仍会保留在文件末尾）
+  minify: prod,
   external: ['obsidian', 'electron', ...builtins],
   define: {
     __DEV__: prod ? 'false' : 'true',

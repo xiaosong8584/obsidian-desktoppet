@@ -20,6 +20,16 @@ export class PetScene {
   private clock: THREE.Clock = new THREE.Clock();
   private disposed: boolean = false;
 
+  /**
+   * 累计 elapsed（秒），由本类自己维护。
+   *
+   * 不能直接用 `clock.getElapsedTime()`：`resume()` 会重新进入 `start()`，
+   * 而 `clock.start()` 会把 elapsedTime 归零 —— 那样 PetAnimator 里按绝对
+   * 时刻记录的 `nextBlinkAt` 就会落到"未来很久"，表现为隐藏再显示后长时间不眨眼。
+   * 这里自己累加，保证 elapsed 在 pause / resume 之间保持单调。
+   */
+  private elapsed: number = 0;
+
   constructor(container: HTMLElement, width: number, height: number, primaryColor: string) {
     this.container = container;
 
@@ -90,13 +100,16 @@ export class PetScene {
   /** 启动 rAF 循环 */
   start(): void {
     if (this.disposed || this.rafId !== 0) return;
-    this.clock.start();
+
+    // 丢弃暂停期间累积的时间，否则恢复后第一帧的 delta 会是一个巨大的跳变
+    this.clock.getDelta();
+
     const loop = (): void => {
       if (this.disposed) return;
       this.rafId = requestAnimationFrame(loop);
       const delta = this.clock.getDelta();
-      const elapsed = this.clock.getElapsedTime();
-      this.animator.update(delta, elapsed);
+      this.elapsed += delta;
+      this.animator.update(delta, this.elapsed);
       this.renderer.render(this.scene, this.camera);
     };
     this.rafId = requestAnimationFrame(loop);
@@ -124,43 +137,28 @@ export class PetScene {
     this.camera.updateProjectionMatrix();
   }
 
-  /** 调整宠物整体缩放（不改相机与容器） */
-  setPetScale(scale: number): void {
-    // 通过 animator 同步 baseScale 到 userData，避免脉冲动画覆盖基准缩放
-    this.animator.setBaseScale(scale);
-  }
-
   /** 应用新颜色方案 */
   applyColor(primaryHex: string): void {
-    const palette: PetModelPalette = {
-      primary: parseInt(primaryHex.replace('#', ''), 16),
-      secondary: 0xffffff,
-      detail: 0x2c3e50
-    };
+    const primaryColor = new THREE.Color(parseInt(primaryHex.replace('#', ''), 16));
 
-    const primaryColor = new THREE.Color(palette.primary);
-
-    // 遍历模型，替换主色材质（通过检查 mesh 是否用了主色）
+    // 只替换「被 PetModel 标记为主色」的材质（material.userData.isPrimary）。
+    // 不再用颜色值启发式（"非白非深非腮红即主色"）：那种写法既会漏
+    // （主色一旦被设成深色 0x2c3e50，之后就再也换不回来），又会多
+    // （将来新增任何其他色调的辅助材质都会被误当成主色）。
     this.model.group.traverse((obj) => {
-      if (obj instanceof THREE.Mesh) {
-        const mat = obj.material;
-        if (mat instanceof THREE.MeshStandardMaterial) {
-          // 简化策略：把不是黑色、白色、深色的都视为"主色"
-          const currentHex = mat.color.getHex();
-          if (
-            currentHex !== 0xffffff &&
-            currentHex !== 0x2c3e50 &&
-            currentHex !== 0xff9fb0
-          ) {
-            mat.color.copy(primaryColor);
-            mat.needsUpdate = true;
-          }
+      if (!(obj instanceof THREE.Mesh)) return;
+      const mat = obj.material;
+      const list = Array.isArray(mat) ? mat : [mat];
+      list.forEach((m) => {
+        if (m instanceof THREE.MeshStandardMaterial && m.userData.isPrimary === true) {
+          m.color.copy(primaryColor);
+          m.needsUpdate = true;
         }
-      }
+      });
     });
   }
 
-  /** 完整释放资源（renderer / geometry / material / rAF） */
+  /** 完整释放资源（renderer / geometry / material / rAF / WebGL context） */
   dispose(): void {
     this.disposed = true;
     if (this.rafId !== 0) {
@@ -171,8 +169,12 @@ export class PetScene {
     disposePetModel(this.model);
     this.scene.clear();
 
-    // 清理 renderer
+    // 清理 renderer：除了 dispose() 还要主动释放 WebGL context。
+    // 浏览器同时存活的 context 数量有上限（约 16），频繁重载插件时
+    // 只调 dispose() 会把旧 context 留在池里，最终导致新 context 创建失败。
     this.renderer.dispose();
+    this.renderer.forceContextLoss();
+
     if (this.canvas.parentElement === this.container) {
       this.container.removeChild(this.canvas);
     }

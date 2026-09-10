@@ -8,7 +8,7 @@
   transition: opacity 0.25s ease;
 }
 
-/* 容器内层：只有宠物本体接受鼠标事件 */
+/* 容器内层：只有宠物本体接受指针事件 */
 .desktoppet-canvas {
   pointer-events: auto;
   cursor: grab;
@@ -16,6 +16,11 @@
   border-radius: 50%;
   /* 兼容明暗主题的柔和阴影，通过 CSS 变量自动切换 */
   filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.18));
+  /* 触摸端：交给 Pointer Events 处理，禁掉浏览器滚动/缩放手势与长按菜单 */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* 拖动中修改光标 */
@@ -27,6 +32,17 @@
 .desktoppet-container.hidden {
   opacity: 0;
   pointer-events: none !important;
+}
+
+/*
+ * 隐藏时必须显式关掉 canvas 的命中测试。
+ * .desktoppet-canvas 自己声明了 pointer-events: auto（为了让容器空白区域
+ * 穿透给 Obsidian），该声明会覆盖从父级继承下来的 none；而 opacity: 0 的
+ * 元素**仍然可以被命中**。不补这一条，隐藏后仍会有一块与宠物等大的
+ * 不可见区域吞掉点击、挡住底下的内容。
+ */
+.desktoppet-container.hidden .desktoppet-canvas {
+  pointer-events: none;
 }
 
 /* 气泡文字层 */
