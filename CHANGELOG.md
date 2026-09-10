@@ -40,6 +40,7 @@
 - **交互层从鼠标事件迁移到 Pointer Events**：`pointerdown/move/up/cancel` + `setPointerCapture`，鼠标 / 触摸 / 触控笔共用一套逻辑，配合 `touch-action: none` 支持移动端拖动；`isDesktopOnly` 相应改回 `false`
 - 模型释放时对共享材质去重，避免重复 `dispose()`
 - **`release.yml` 校验 tag 与 `manifest.json` 版本一致**：此前打 `v1.2.0` 而 manifest 仍是 `1.0.0` 也会照常发布 Release；现于构建前比对 `GITHUB_REF_NAME`（去掉前缀 `v`）与 manifest 的 `version`，不一致直接失败
+- **`release.yml` 支持预发布 tag**：上一版的版本校验用严格相等，导致 `v1.1.0-rc.1` 这类预发布 tag 因 `1.1.0-rc.1 != 1.1.0` 被直接拒绝（而发布指南的「场景 2：预发布」恰恰在教用户这么打 tag）。现改为**先剥掉 `-rc.N` / `-beta.N` 等预发布后缀、只比对基版本**，并对预发布输出提示；正式版本号不一致时仍会失败
 - **`build.yml` 的 "Comment on success" 名不副实**：该步骤只 `echo` 一行、并不会真的发表评论，`if: success()` 也是多余的（前序步骤失败时后续本就不会执行）。现改为写入 GitHub Step Summary，在产物上传之后汇总结果
 
 ### Documentation
@@ -60,6 +61,10 @@
 - `docs/en/UserGuide.md` 的 **Software 表补齐中文版已有的两行**（移动端 iOS / iPadOS / Android、输入方式），消除中英文档差异
 - 阴影相关的表述按实际实现更正：气泡描边是 `--background-modifier-border`，**阴影**是 `--background-modifier-box-shadow`（此前把前者误写成阴影色）
 - 中英文 UserGuide 与两份 README 明确标注**状态栏切换仅桌面端可用**（移动端请用命令面板或设置面板）
+- **`CODE_OF_CONDUCT.md` 清理残留的草稿首行**：原文件第 1 行是文件名、第 3 行是一句写给自己的备注（「推荐直接使用 Contributor Covenant：」），紧接着才是 `# 行为准则` 标题；现删除草稿行并补齐适用范围 / 报告方式 / 执行条款
+- **`README.zh-CN.md` 的项目结构树修正**：末行原写作 `README.md  # 本文件`，但中文版文件名为 `README.zh-CN.md`（指错了自己），且漏列自身；现改为分别列出 `README.md`（英文）与 `README.zh-CN.md`（本文件）
+- **`check_before_publish.sh` 的 3.6 修复 MSYS 路径坑**：`zip.exe` 是原生 Windows 程序，会把 `/tmp/x.zip` 解释成「盘根 `\tmp\`」，而 `stat` / `rm` 走 MSYS 路径 —— 两者不是同一文件，导致大小恒为空、且每次运行都留下约 130KB 残留。现全程使用同一个经 `cygpath` 解析的路径，并统一在系统临时目录读写、用后即删
+- **两份 `RELEASE.md` 补写预发布 tag 的实际行为**：明确「校验只比对基版本」，并提示发布预发布版时 `manifest.json` / `package.json` 应写基版本号（`1.1.0`），而非 `1.1.0-rc.1`
 
 ---
 

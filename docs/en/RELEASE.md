@@ -231,7 +231,11 @@ git push origin v1.1.0-rc.1
 # Mark as Pre-release on the GitHub Release page
 ```
 
-> **Note**: The current `release.yml` matches all `v*` tags, including prereleases. To distinguish between official and prerelease, add conditional logic to `release.yml`.
+> **Note**: `release.yml` matches all `v*` tags, including prereleases.
+>
+> The version check **strips the prerelease suffix and compares the base version**: `v1.1.0-rc.1` → base version `1.1.0`, which passes as long as `manifest.json` is `1.1.0`. In other words — **when releasing a prerelease, set `manifest.json` / `package.json` to the base version (e.g. `1.1.0`), not `1.1.0-rc.1`**, otherwise the check fails and the Release is rejected.
+>
+> If you also want GitHub to tick "Pre-release" automatically, add a `prerelease: true` condition to `release.yml` (not implemented yet).
 
 ### Scenario 3: Rollback Release
 

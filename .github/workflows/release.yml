@@ -24,13 +24,20 @@ jobs:
       - name: Verify tag matches manifest.json version
         run: |
           set -euo pipefail
-          tag_version="${GITHUB_REF_NAME#v}"
+          tag="${GITHUB_REF_NAME#v}"
+          # 预发布 tag（如 v1.1.0-rc.1 / v1.1.0-beta.2）只比较基版本，
+          # 否则 1.1.0-rc.1 != 1.1.0 会把预发布 Release 直接挡死。
+          base_version="${tag%%-*}"
           manifest_version="$(node -p "require('./manifest.json').version")"
-          echo "Tag version      : ${tag_version}"
+          echo "Tag              : ${GITHUB_REF_NAME}"
+          echo "Tag base version : ${base_version}"
           echo "manifest version : ${manifest_version}"
-          if [ "${tag_version}" != "${manifest_version}" ]; then
+          if [ "${base_version}" != "${manifest_version}" ]; then
             echo "::error::Tag ${GITHUB_REF_NAME} does not match manifest.json version ${manifest_version}. Bump manifest.json (and package.json) before tagging."
             exit 1
+          fi
+          if [ "${tag}" != "${manifest_version}" ]; then
+            echo "ℹ️ Pre-release tag detected — base version matches manifest.json."
           fi
           echo "✅ Tag matches manifest.json version"
 

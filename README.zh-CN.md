@@ -102,7 +102,8 @@ desktoppet/
 ├── package.json         # npm 依赖
 ├── tsconfig.json        # TypeScript 配置
 ├── esbuild.config.mjs   # 构建脚本
-└── README.md            # 本文件
+├── README.md            # 英文 README
+└── README.zh-CN.md      # 本文件
 ```
 
 ## 🛠️ 技术栈

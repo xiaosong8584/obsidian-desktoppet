@@ -486,13 +486,49 @@ fi
 
 # 3.6 打包测试（验证 zip 命令可用）
 step "3.6 测试 zip 打包（模拟 release.yml）"
+# 设计说明（MSYS 路径坑，2026-09-11 修正；上一版修法有误，已重写）：
+#   背景：zip.exe 是【原生 Windows 程序】，不认 MSYS 风格的 /tmp/x.zip —— 它会把它
+#   解释成「当前盘根的 \tmp\」（例如 I:\tmp\x.zip），而 stat / rm 是 MSYS 内置，
+#   操作的是 MSYS 自己的临时目录（cygpath -w /tmp → C:\Users\…\AppData\Local\Temp）。
+#   两者不是同一个文件，原实现因此：
+#     · stat 取不到大小 → 报「测试包大小：」（空）
+#     · rm -f 删不掉真实文件 → 每次运行都留一份 130KB+ 残留
+#
+#   上一版修法只把【zip 的入参】换成 cygpath 后的 Windows 路径，但 stat / rm 仍在用
+#   MSYS 路径 → 依然读不到大小、删不掉文件（只是把残留从盘根 \tmp\ 挪到了系统临时目录）。
+#
+#   本版修法：全程只用【一个】已解析的 Windows 路径（交给原生 zip.exe），
+#   再把它转回 MSYS 路径供 stat / rm 使用，确保三者指向同一文件。
+#   这样做还有个好处：即使脚本在纯 MSYS 环境运行，路径也落在系统临时目录（远离仓库）。
+zip_dir="${TMPDIR:-/tmp}"
+tmp_zip_win=""
+tmp_zip_check=""
+tmp_zip_name=""
+
+if command -v cygpath >/dev/null 2>&1; then
+  # zip_dir 在 MSYS 下形如 /tmp；转成 Windows 路径交给原生 zip.exe
+  tmp_zip_win="$(cygpath -w "$zip_dir" 2>/dev/null)/obsidian-desktoppet-test.zip"
+  # 再转回 MSYS 路径（供 stat / rm 使用），保证与 tmp_zip_win 指向同一文件
+  tmp_zip_check="$(cygpath -u "$tmp_zip_win" 2>/dev/null)"
+else
+  tmp_zip_win="${zip_dir%/}/obsidian-desktoppet-test.zip"
+  tmp_zip_check="$tmp_zip_win"
+fi
+
 if command -v zip >/dev/null 2>&1; then
   cd "$(git rev-parse --show-toplevel)"
-  if zip -r /tmp/obsidian-desktoppet-test.zip main.js styles.css manifest.json 2>&1 | tail -3; then
-    test_zip_size=$(stat -c%s /tmp/obsidian-desktoppet-test.zip 2>/dev/null || stat -f%z /tmp/obsidian-desktoppet-test.zip 2>/dev/null)
-    rm -f /tmp/obsidian-desktoppet-test.zip
-    pass "zip 打包成功（测试包大小：$(numfmt --to=iec $test_zip_size 2>/dev/null || echo "$test_zip_size bytes")）"
+  # 先清掉可能存在的同名旧文件，避免 stat 读到上一次的陈旧大小
+  rm -f "$tmp_zip_check" "$tmp_zip_win" 2>/dev/null
+  if zip -r "$tmp_zip_win" main.js styles.css manifest.json >/dev/null 2>&1; then
+    test_zip_size=$(stat -c%s "$tmp_zip_check" 2>/dev/null || stat -f%z "$tmp_zip_check" 2>/dev/null)
+    rm -f "$tmp_zip_check" "$tmp_zip_win" 2>/dev/null
+    if [ -n "$test_zip_size" ]; then
+      pass "zip 打包成功（测试包大小：$(numfmt --to=iec "$test_zip_size" 2>/dev/null || echo "$test_zip_size bytes")）"
+    else
+      warn "zip 打包成功，但未能读取测试包大小（路径：$tmp_zip_win）"
+    fi
   else
+    rm -f "$tmp_zip_check" "$tmp_zip_win" 2>/dev/null
     fail "zip 打包失败"
   fi
 else

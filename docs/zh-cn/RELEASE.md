@@ -230,7 +230,11 @@ git push origin v1.1.0-rc.1
 # 在 GitHub Release 页面勾选 Pre-release
 ```
 
-> **注意**：当前 `release.yml` 匹配所有 `v*` tag，包含预发布。若要区分正式版与预发布，需要给 `release.yml` 增加条件判断。
+> **注意**：`release.yml` 匹配所有 `v*` tag，包含预发布。
+>
+> 版本校验会**先剥掉预发布后缀再比对基版本**：`v1.1.0-rc.1` → 基版本 `1.1.0`，只要 `manifest.json` 是 `1.1.0` 就能通过。也就是说 —— **发布预发布版时，`manifest.json` / `package.json` 要写成基版本号（如 `1.1.0`），而不是 `1.1.0-rc.1`**，否则校验会失败、Release 被拒绝。
+>
+> 若还想在 Release 页自动勾选 Pre-release，需要给 `release.yml` 增加 `prerelease: true` 的条件判断（当前未做）。
 
 ### 场景 3：回滚发布
 
