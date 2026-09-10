@@ -24,8 +24,9 @@
 ### Documentation
 
 - 双语 README：`README.md`（英文默认）+ `README.zh-CN.md`（中文），使用 GitHub 官方多语言后缀方案
-- 中文开发文档：
-  - `doc/zh-cn/UserGuide.md` — 用户使用指南
+- 使用指南（中英双语）：
+  - `docs/en/UserGuide.md` — User Guide (English)
+  - `docs/zh-cn/UserGuide.md` — 用户使用指南（中文）
 - 项目规范：`CONTRIBUTING.md`、`CODE_OF_CONDUCT.md`、`SECURITY.md`、`LICENSE`（MIT）
 
 ### CI/CD
