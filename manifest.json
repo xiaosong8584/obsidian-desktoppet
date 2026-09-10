@@ -1,7 +1,7 @@
 {
   "id": "desktoppet",
   "name": "Desktop Pet",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minAppVersion": "1.0.0",
   "description": "一只可爱的 3D 卡通机器人桌面宠物，可拖动、可点击、可切换配色。",
   "author": "xiaosong8584",

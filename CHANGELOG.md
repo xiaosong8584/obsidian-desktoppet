@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+（在此记录下一个版本的变更）
+
+---
+
+## [1.0.1] - 2026-09-11
+
 ### Fixed
 
 - **点击反馈的时间基准错误**：点击反馈原先传入 `performance.now() / 1000`（页面加载至今的秒数），而渲染循环的 `elapsed` 来自 `THREE.Clock`（场景创建至今的秒数）。两者不同源使 `elapsed - clickStartAt` 恒为负数，缩放脉冲 / 弯眼 / 天线弹跳永不收敛——实测「插件加载时刻距页面创建的时间」越长越离谱（天线小球会被甩到 ±180、瞳孔永久保持弯眼）。现统一由 `PetAnimator.lastElapsed` 提供时间基准
@@ -56,6 +62,8 @@
 - `check_before_publish.sh` 的 2.6 增加**「被引用文件必须已被 git 跟踪」**校验：只判断文件是否存在会漏掉「链接指向未跟踪文件」的情况（本地全绿，push 后 404）。`SECURITY.md` / `check_before_publish.sh` / `docs/*/RELEASE.md` 已纳入 git
 - `docs/*/RELEASE.md` 的 FAQ 警告文案与实际脚本输出对齐（脚本输出中文，文档原先写的是对不上的英文占位文案）；英文版补上指向中文版的反向链接
 - 两份 UserGuide：修正 **`copy` 不能复制目录** 的安装命令（改为只复制 3 个构建产物）；「窗口左上角」改为「左侧、偏上位置」，与默认坐标 `(20, 200)` 一致；删除 Q1 中无依据的「全屏阅读模式」排查项；Q7 与 Q6 关于主题影响的表述统一
+- 两份 README 用真实截图替换截图占位符：新增 `images/desktoppet.jpg`（设置面板 + 右下角宠物本体与气泡台词），并补上图片说明文字；`images/` 同步加入项目结构树
+- 两份 README 的版本徽章由 `1.0.0` 更新为 `1.0.1`（原先落后于 `manifest.json`）
 - `.github/ISSUE_TEMPLATE/feature_request.md` 改为 Obsidian 插件专用模板（原为 GitHub 默认模板）
 - 两份 UserGuide 的「点击脉冲约 400ms」修正为 **450ms**（与 `PetAnimator` 的 `clickDuration = 0.45` 一致）
 - `docs/en/UserGuide.md` 的 **Software 表补齐中文版已有的两行**（移动端 iOS / iPadOS / Android、输入方式），消除中英文档差异

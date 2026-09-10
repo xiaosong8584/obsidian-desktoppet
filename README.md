@@ -3,7 +3,7 @@
 > **Project**: <https://github.com/xiaosong8584/obsidian-desktoppet>
 
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
-![version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)
+![version](https://img.shields.io/badge/version-1.0.1-brightgreen.svg)
 ![obsidian](https://img.shields.io/badge/Obsidian-1.0+-blueviolet.svg)
 ![three.js](https://img.shields.io/badge/three.js-0.160-orange.svg)
 
@@ -26,7 +26,9 @@ Built with parametric geometry (Sphere / Cylinder / Capsule / Torus), **zero ext
 
 ## 📸 Screenshots
 
-*(Screenshot placeholder: pet idle state, click feedback, drag state, settings panel)*
+![Settings panel — pet floating in the bottom-right corner with a speech bubble](images/desktoppet.jpg)
+
+*Settings panel — visibility toggle, size slider (1.25x), primary color, position X/Y and reset. The pet itself is visible in the bottom-right corner, showing a speech bubble.*
 
 ## ⚙️ Development Setup
 
@@ -97,6 +99,7 @@ desktoppet/
 ├── package.json         # npm dependencies
 ├── tsconfig.json        # TypeScript config
 ├── esbuild.config.mjs   # Build script
+├── images/              # README screenshots
 └── README.md            # This file
 ```
 

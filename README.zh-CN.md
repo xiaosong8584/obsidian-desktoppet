@@ -4,7 +4,7 @@
 
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 
-![version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)
+![version](https://img.shields.io/badge/version-1.0.1-brightgreen.svg)
 
 
 
@@ -31,7 +31,9 @@
 
 ## 📸 截图
 
-（在此处插入截图占位：宠物 idle 状态、点击反馈、拖动状态、设置面板）
+![设置面板 —— 右下角可见宠物本体与气泡台词](images/desktoppet.jpg)
+
+*设置面板：显示开关、宠物大小（1.25x）、主色、位置 X/Y、恢复默认。右下角为宠物本体，头顶显示气泡台词。*
 
 ## ⚙️ 开发环境搭建
 
@@ -102,6 +104,7 @@ desktoppet/
 ├── package.json         # npm 依赖
 ├── tsconfig.json        # TypeScript 配置
 ├── esbuild.config.mjs   # 构建脚本
+├── images/              # README 截图
 ├── README.md            # 英文 README
 └── README.zh-CN.md      # 本文件
 ```

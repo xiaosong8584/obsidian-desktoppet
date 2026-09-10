@@ -1,6 +1,6 @@
 {
   "name": "obsidian-desktoppet",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Obsidian 3D 卡通机器人桌面宠物插件",
   "main": "main.js",
   "scripts": {
