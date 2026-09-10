@@ -3,11 +3,16 @@
 > **项目地址**：<https://github.com/xiaosong8584/obsidian-desktoppet>
 
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
+
 ![version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)
+
+
+
 ![obsidian](https://img.shields.io/badge/Obsidian-1.0+-blueviolet.svg)
+
 ![three.js](https://img.shields.io/badge/three.js-0.160-orange.svg)
 
-一只可爱的 **3D 卡通机器人**桌面宠物，悬浮在 Obsidian 窗口内。
+一只可爱的 **3D 卡通机器人**桌面宠物，悬浮在 Obsidian 窗口内。  
 参数化几何体组合构建（Sphere / Cylinder / Capsule / Torus），**零外部资源依赖**，即装即用。
 
 ---
@@ -115,7 +120,7 @@ desktoppet/
 
 ### 拖动的速度感知倾斜
 
-拖动鼠标时，根据 X 方向速度计算出倾角目标（`-0.3 ~ +0.3` 弧度），
+拖动鼠标时，根据 X 方向速度计算出倾角目标（`-0.3 ~ +0.3` 弧度），  
 动画控制器里通过一阶低通滤波平滑过渡：
 
 ```ts
