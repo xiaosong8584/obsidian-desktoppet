@@ -21,14 +21,26 @@
 - **隐藏时仍在渲染**：隐藏状态下 rAF 循环未暂停、持续占用 GPU；现接入 `pause()` / `resume()`
 - **主色替换的启发式失效**：原先按「非白非深非腮红即主色」判断——其中的腮红分支是死代码（腮红是 `MeshBasicMaterial`，本就不在遍历范围内），且主色一旦被设成深色 `0x2c3e50` 就再也改不回来。现改为 `material.userData.isPrimary` 显式标记
 - **WebGL context 泄漏**：`dispose()` 只调 `renderer.dispose()`，未真正释放 context；频繁重载插件会累积到浏览器约 16 个 context 的上限。现补 `forceContextLoss()`
+- **状态栏图标丢失 Obsidian 基类**：`registerStatusBar()` 用 `className = '...'` 整体赋值，把 `addStatusBarItem()` 自带的 `status-bar-item` 一并顶掉，状态栏基础布局 / 可点击态样式失效（此前只能在 `styles.css` 手工补 `padding` / `line-height`）。现改用 `addClass()` 追加
+- **指针捕获被释放后宠物再也拖不动**：`activePointerId` 只在 `pointerup` / `pointercancel` 时复位；若 `lostpointercapture` 先到且没有后续事件，该字段会一直卡住、吞掉之后所有 `pointerdown`。现补 `lostpointercapture` 兜底收尾（不误触发点击）
+- **宠物上会弹出系统右键菜单**：非主键直接 `return` 而未 `preventDefault`；现于 `pointerdown` 非主键分支阻止默认行为，并监听 `contextmenu` 一并抑制
+- **跨显示器后渲染分辨率不更新**：`window.resize` 回调只重裁剪位置，不重新读取 `devicePixelRatio`（换显示器 / 改系统缩放后会变）。现回调同步刷新渲染尺寸，`PetScene.resize()` 内重新 `setPixelRatio`
+- **换主色触发一次着色器重编译**：`applyColor()` 每次都对材质置 `needsUpdate = true`，而只改 `color` 并不需要它
+- **移动端会去调用 `addStatusBarItem()`**：该 API 官方标注 "Not available on mobile"，而插件声明 `isDesktopOnly: false`、移动端同样会执行 `onload`。现加 `Platform.isDesktop` 守卫，移动端不再尝试注册状态栏（改用命令面板 / 设置面板切换显隐）
+- **阴影其实没有跟随主题**：`styles.css` 里宠物投影与气泡投影的阴影色是硬编码的 `rgba(0, 0, 0, …)`，但 `styles.css` 注释与所有文档都声称「使用 Obsidian CSS 变量跟随主题」。现改用 `var(--background-modifier-box-shadow, …)`，变量名同步更正到文档
+- **设置面板用了两个已废弃 API**：`setDynamicTooltip()` 自 Obsidian 0.9.7 起废弃（官方说明「数值现在总是内联显示」，调用它没有任何效果）—— 已移除；`setWarning()` 自 0.11.0 起废弃，替代品 `setDestructive()` 需 Obsidian ≥ 1.13.0 而本插件 `minAppVersion` 为 1.0.0 —— 改为运行时能力探测，新版本走新 API、老版本退回旧 API（不为一个按钮配色抬高最低版本要求）
 
 ### Changed
 
+- **构建脚本去掉死配置**：`esbuild.config.mjs` 里的 `process.argv.forEach` 分支永远不会命中（npm script 从不传 `dev`），`opts.watch` / `opts.serve` / `define.__DEV__` 实为死配置（`__DEV__` 源码从未引用）。现移除，并把构建模式显式化为 `production` / `development` / 缺省 watch
+- **`npm run build:dev` 名副其实**：原先与 `npm run dev` 完全等价（都进入 watch、进程永不退出），现改为一次性（`rebuild` + `dispose`）的非压缩开发构建，补上了项目缺失的「一次性非压缩构建」入口
 - 位置输入框改为**防抖写盘**（400ms）；拖动结束、显隐切换等离散动作仍立即保存
 - 设置面板不再重复写盘（原先每次改动会走两次 `saveSettings()`）
 - 生产构建启用 `minify`（`main.js` 体积显著下降，license 注释保留在文件末尾）
 - **交互层从鼠标事件迁移到 Pointer Events**：`pointerdown/move/up/cancel` + `setPointerCapture`，鼠标 / 触摸 / 触控笔共用一套逻辑，配合 `touch-action: none` 支持移动端拖动；`isDesktopOnly` 相应改回 `false`
 - 模型释放时对共享材质去重，避免重复 `dispose()`
+- **`release.yml` 校验 tag 与 `manifest.json` 版本一致**：此前打 `v1.2.0` 而 manifest 仍是 `1.0.0` 也会照常发布 Release；现于构建前比对 `GITHUB_REF_NAME`（去掉前缀 `v`）与 manifest 的 `version`，不一致直接失败
+- **`build.yml` 的 "Comment on success" 名不副实**：该步骤只 `echo` 一行、并不会真的发表评论，`if: success()` 也是多余的（前序步骤失败时后续本就不会执行）。现改为写入 GitHub Step Summary，在产物上传之后汇总结果
 
 ### Documentation
 
@@ -40,6 +52,14 @@
 - 修正文档与代码不一致处：主色 hex、默认位置 `(20, 200)`、台词所在文件与内容、`PetModelParts` 字段名、气泡 CSS 变量、几何体数量、设置面板快捷键 `Ctrl+,`
 - README：修正安装步骤（只需 3 个构建产物）、`build:dev` 说明、去掉本地绝对路径；新增 `docs/` 文档索引
 - 统一修正命令面板快捷键（`Ctrl+P`，Mac `Cmd+P`）与拖动交互措辞（鼠标 / 触摸 / 触控笔），同步 `README`、中英文 `UserGuide` 的跨平台说明
+- `check_before_publish.sh` 的 2.6 增加**「被引用文件必须已被 git 跟踪」**校验：只判断文件是否存在会漏掉「链接指向未跟踪文件」的情况（本地全绿，push 后 404）。`SECURITY.md` / `check_before_publish.sh` / `docs/*/RELEASE.md` 已纳入 git
+- `docs/*/RELEASE.md` 的 FAQ 警告文案与实际脚本输出对齐（脚本输出中文，文档原先写的是对不上的英文占位文案）；英文版补上指向中文版的反向链接
+- 两份 UserGuide：修正 **`copy` 不能复制目录** 的安装命令（改为只复制 3 个构建产物）；「窗口左上角」改为「左侧、偏上位置」，与默认坐标 `(20, 200)` 一致；删除 Q1 中无依据的「全屏阅读模式」排查项；Q7 与 Q6 关于主题影响的表述统一
+- `.github/ISSUE_TEMPLATE/feature_request.md` 改为 Obsidian 插件专用模板（原为 GitHub 默认模板）
+- 两份 UserGuide 的「点击脉冲约 400ms」修正为 **450ms**（与 `PetAnimator` 的 `clickDuration = 0.45` 一致）
+- `docs/en/UserGuide.md` 的 **Software 表补齐中文版已有的两行**（移动端 iOS / iPadOS / Android、输入方式），消除中英文档差异
+- 阴影相关的表述按实际实现更正：气泡描边是 `--background-modifier-border`，**阴影**是 `--background-modifier-box-shadow`（此前把前者误写成阴影色）
+- 中英文 UserGuide 与两份 README 明确标注**状态栏切换仅桌面端可用**（移动端请用命令面板或设置面板）
 
 ---
 

@@ -12,6 +12,8 @@ import { PetAnimator } from './PetAnimator';
  * - 拖动阈值 5px；超过阈值视为拖动，否则视为点击。
  * - 只响应落在 canvas 上的指针（canvas 通过 CSS `pointer-events: auto`
  *   保证空白区域不拦截 Obsidian 的点击）。
+ * - `lostpointercapture` 兜底收尾（捕获被系统释放且没有 up/cancel 时）；
+ *   右键菜单在宠物上被抑制。
  */
 export class PetInteraction {
   private container: HTMLElement;
@@ -43,6 +45,8 @@ export class PetInteraction {
   private onPointerMove: (e: PointerEvent) => void;
   private onPointerUp: (e: PointerEvent) => void;
   private onPointerCancel: (e: PointerEvent) => void;
+  private onLostPointerCapture: (e: PointerEvent) => void;
+  private onContextMenu: (e: MouseEvent) => void;
 
   /** 气泡元素 */
   private bubbleEl: HTMLElement | null = null;
@@ -80,19 +84,30 @@ export class PetInteraction {
     this.onPointerMove = this.handlePointerMove.bind(this);
     this.onPointerUp = this.handlePointerUp.bind(this);
     this.onPointerCancel = this.handlePointerCancel.bind(this);
+    this.onLostPointerCapture = this.handleLostPointerCapture.bind(this);
+    this.onContextMenu = this.handleContextMenu.bind(this);
 
     this.canvas.addEventListener('pointerdown', this.onPointerDown);
     this.canvas.addEventListener('pointermove', this.onPointerMove);
     this.canvas.addEventListener('pointerup', this.onPointerUp);
     this.canvas.addEventListener('pointercancel', this.onPointerCancel);
+    // 捕获被系统释放（无后续 up/cancel）时也要收尾，否则 activePointerId 会卡住
+    this.canvas.addEventListener('lostpointercapture', this.onLostPointerCapture);
+    // 宠物上不弹系统右键菜单（装饰性元素，没有自定义菜单可用）
+    this.canvas.addEventListener('contextmenu', this.onContextMenu);
   }
 
   /** 指针按下 */
   private handlePointerDown(e: PointerEvent): void {
     // 已有活动指针（多点触控 / 多键鼠标）→ 忽略后续指针
     if (this.activePointerId !== null) return;
-    // 仅响应主键（鼠标左键 / 触摸 / 笔）；右键、中键不参与拖动
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    // 仅响应主键（鼠标左键 / 触摸 / 笔）；右键、中键不参与拖动。
+    // 仍要 preventDefault + stopPropagation：否则右键会在宠物上弹出系统菜单。
+    if (e.pointerType === 'mouse' && e.button !== 0) {
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
 
     // 阻止 Obsidian 接收该事件，并抑制触摸端的兼容鼠标事件与手势
     e.stopPropagation();
@@ -173,6 +188,24 @@ export class PetInteraction {
     this.finishPointer(e, false);
   }
 
+  /**
+   * 指针捕获被释放。
+   *
+   * 正常松手会先收到 `pointerup`（此时 `activePointerId` 已复位），本回调就是空操作；
+   * 但若捕获因其他原因被释放（元素被移出文档、系统抢占等），可能收不到
+   * `pointerup` / `pointercancel`，`activePointerId` 会一直卡着 ——
+   * 表现为「此后怎么点都拖不动」。这里兜底收尾。
+   */
+  private handleLostPointerCapture(e: PointerEvent): void {
+    if (e.pointerId !== this.activePointerId) return;
+    this.finishPointer(e, false);
+  }
+
+  /** 抑制宠物上的系统右键菜单 */
+  private handleContextMenu(e: MouseEvent): void {
+    e.preventDefault();
+  }
+
   /** 统一的收尾逻辑 */
   private finishPointer(e: PointerEvent, allowClick: boolean): void {
     e.stopPropagation();
@@ -228,6 +261,8 @@ export class PetInteraction {
     this.canvas.removeEventListener('pointermove', this.onPointerMove);
     this.canvas.removeEventListener('pointerup', this.onPointerUp);
     this.canvas.removeEventListener('pointercancel', this.onPointerCancel);
+    this.canvas.removeEventListener('lostpointercapture', this.onLostPointerCapture);
+    this.canvas.removeEventListener('contextmenu', this.onContextMenu);
 
     if (this.bubbleTimer !== null) {
       window.clearTimeout(this.bubbleTimer);

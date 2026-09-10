@@ -130,6 +130,9 @@ export class PetScene {
 
   /** 动态更新容器尺寸 */
   resize(width: number, height: number): void {
+    // 重新取一次 devicePixelRatio：跨显示器拖动窗口、或系统缩放比例变化后，
+    // 它可能已经变了，沿用旧值会让画面在新显示器上偏糊或过采样。
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setSize(width, height, false);
     this.renderer.domElement.style.width = `${width}px`;
     this.renderer.domElement.style.height = `${height}px`;
@@ -151,8 +154,9 @@ export class PetScene {
       const list = Array.isArray(mat) ? mat : [mat];
       list.forEach((m) => {
         if (m instanceof THREE.MeshStandardMaterial && m.userData.isPrimary === true) {
+          // 只改 color 不需要 needsUpdate：那是给着色器源码/宏变更用的，
+          // 每次换色都置 true 会白白触发一次着色器重编译。
           m.color.copy(primaryColor);
-          m.needsUpdate = true;
         }
       });
     });

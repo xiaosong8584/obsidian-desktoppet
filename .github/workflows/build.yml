@@ -34,6 +34,5 @@ jobs:
             styles.css
             manifest.json
 
-      - name: Comment on success
-        if: success()
-        run: echo "✅ Build passed"
+      - name: Build summary
+        run: echo "✅ Build passed — plugin-build artifact uploaded" >> "$GITHUB_STEP_SUMMARY"

@@ -8,7 +8,16 @@ DO NOT MANUALLY EDIT - it will be overwritten on the next build.
 */
 `;
 
-const prod = process.argv[2] === 'production';
+/**
+ * 构建模式（第一个命令行参数）：
+ *   production   —— 压缩、无 sourcemap，构建完即退出（发布用）
+ *   development  —— 不压缩、内联 sourcemap，构建完即退出（一次性 dev 构建，供本地验证）
+ *   缺省 / watch —— 不压缩、内联 sourcemap，监听文件变化持续重建（开发用）
+ */
+const mode = process.argv[2] ?? 'watch';
+const prod = mode === 'production';
+/** 是否「构建一次就退出」（非 watch 模式） */
+const once = mode === 'production' || mode === 'development';
 
 /** @type {import('esbuild').BuildOptions} */
 const opts = {
@@ -25,7 +34,6 @@ const opts = {
   minify: prod,
   external: ['obsidian', 'electron', ...builtins],
   define: {
-    __DEV__: prod ? 'false' : 'true',
     'process.env.NODE_ENV': JSON.stringify(prod ? 'production' : 'development')
   },
   loader: {
@@ -33,13 +41,6 @@ const opts = {
     '.ts': 'ts'
   }
 };
-
-process.argv.forEach((arg) => {
-  if (arg === 'dev') {
-    opts.watch = true;
-    opts.serve = { serveHost: '127.0.0.1', servePort: 8080 };
-  }
-});
 
 /** @type {import('esbuild').Plugin} */
 const esbuildPluginAlias = {
@@ -55,7 +56,7 @@ const esbuildPluginAlias = {
  */
 async function main(o) {
   const ctx = await esbuild.context(o);
-  if (prod) {
+  if (once) {
     await ctx.rebuild();
     await ctx.dispose();
   } else {

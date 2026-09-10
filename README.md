@@ -19,8 +19,8 @@ Built with parametric geometry (Sphere / Cylinder / Capsule / Torus), **zero ext
 - 💤 **Idle Animations** — Breathing float, gentle sway, random blinks (2.5–6s), arm swing, antenna wiggle
 - 🎭 **5 Color Schemes** — Soft Blue, Mint, Coral Pink, Lavender, Warm Orange
 - 📏 **Size Slider** — 0.5x to 2.0x
-- 🌗 **Theme Aware** — Bubble & shadow use Obsidian CSS variables, auto-follow theme
-- 🎚️ **Status Bar Toggle** — One-click show/hide, also via `Ctrl+P` command palette
+- 🌗 **Theme Aware** — Bubble & shadow use Obsidian CSS variables (`--background-secondary`, `--background-modifier-box-shadow`), auto-follow theme
+- 🎚️ **Status Bar Toggle** — One-click show/hide, also via `Ctrl+P` command palette (status bar is desktop-only)
 - 🔌 **Fully Transparent** — Doesn't block Obsidian content (outer `pointer-events: none`, only pet is interactive)
 - ♻️ **Full Lifecycle** — `onunload` releases renderer / geometry / material / rAF / listeners
 
@@ -40,7 +40,7 @@ Built with parametric geometry (Sphere / Cylinder / Capsule / Torus), **zero ext
    ```bash
    npm run dev          # watch mode: rebuild on save (non-minified, inline sourcemap)
    npm run build        # production build: tsc type-check + minified main.js
-   npm run build:dev    # same as `npm run dev` (watch mode)
+   npm run build:dev    # one-off development build (non-minified, inline sourcemap; exits when done)
    ```
 
 ## 📦 Install to Obsidian
@@ -63,7 +63,7 @@ Built with parametric geometry (Sphere / Cylinder / Capsule / Torus), **zero ext
 ## 🎮 Usage
 
 - **Command palette** — `Ctrl+P` → search "Show/Hide Pet"
-- **Status bar** — Robot icon in the bottom-right corner, click to toggle
+- **Status bar** — Robot icon in the bottom-right corner, click to toggle (desktop only)
 - **Drag** — Press and drag the pet (mouse, touch or stylus) to any position
 - **Click** — Click the pet body → scale pulse + happy eyes + speech bubble
 - **Settings** — Settings → Community plugins → Desktop Pet

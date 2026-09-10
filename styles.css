@@ -14,8 +14,13 @@
   cursor: grab;
   display: block;
   border-radius: 50%;
-  /* 兼容明暗主题的柔和阴影，通过 CSS 变量自动切换 */
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.18));
+  /*
+   * 阴影颜色跟随明暗主题。
+   * `--background-modifier-box-shadow` 是 Obsidian 自己用来画模态框 / 弹层阴影的变量，
+   * 浅色主题下是低透明度黑，深色主题下是高透明度黑，明暗切换会自动跟随。
+   * 回退值是给变量缺失的极端情况兜底用的。
+   */
+  filter: drop-shadow(0 6px 12px var(--background-modifier-box-shadow, rgba(0, 0, 0, 0.18)));
   /* 触摸端：交给 Pointer Events 处理，禁掉浏览器滚动/缩放手势与长按菜单 */
   touch-action: none;
   -webkit-user-select: none;
@@ -59,7 +64,7 @@
   color: var(--text-normal, #333);
   background: var(--background-secondary, rgba(255, 255, 255, 0.92));
   border: 1px solid var(--background-modifier-border, rgba(0, 0, 0, 0.08));
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 10px var(--background-modifier-box-shadow, rgba(0, 0, 0, 0.12));
   opacity: 0;
   transition: opacity 0.25s ease, transform 0.25s ease;
   pointer-events: none;

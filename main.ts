@@ -1,4 +1,4 @@
-import { Plugin } from 'obsidian';
+import { Platform, Plugin } from 'obsidian';
 import { PetScene } from './pet/PetScene';
 import { PetInteraction } from './pet/PetInteraction';
 import { SettingsTab, DEFAULT_SETTINGS, PetSettings } from './settings/SettingsTab';
@@ -8,6 +8,19 @@ const BASE_SIZE = 180;
 
 /** 设置写盘防抖时长（ms）——位置输入框每敲一个字符都会触发 updateSettings */
 const SAVE_DEBOUNCE_MS = 400;
+
+/**
+ * 「已应用快照」只保留会作用到场景的字段。
+ *
+ * `enabled` 刻意不在其中：可见性以真实状态 `isVisible` 为准
+ * （状态栏切换会绕过设置面板），留在快照里也只是个只写不读的死字段。
+ */
+type AppliedSettings = Pick<PetSettings, 'petSize' | 'positionX' | 'positionY' | 'color'>;
+
+/** 从完整设置中提取「已应用快照」 */
+function snapshotSettings(s: PetSettings): AppliedSettings {
+  return { petSize: s.petSize, positionX: s.positionX, positionY: s.positionY, color: s.color };
+}
 
 /**
  * Obsidian 桌面宠物插件主入口。
@@ -41,7 +54,7 @@ export default class DesktopPetPlugin extends Plugin {
    * SettingsTab 会先原地修改 this.settings，再把同一个对象引用传进来，
    * 那样所有比较都会恒为 false，设置改动将永远不生效。
    */
-  private appliedSettings: PetSettings = { ...DEFAULT_SETTINGS };
+  private appliedSettings: AppliedSettings = snapshotSettings(DEFAULT_SETTINGS);
 
   /** 防抖写盘计时器 */
   private saveTimer: number | null = null;
@@ -67,8 +80,14 @@ export default class DesktopPetPlugin extends Plugin {
     this.addSettingTab(new SettingsTab(this.app, this));
 
     // 6. 窗口尺寸变化后重新裁剪位置：窗口变小 / 换显示器后，
-    //    原本的坐标可能已经在可视区之外，宠物会"消失"且无法抓回
-    this.registerDomEvent(window, 'resize', () => this.applyClampedPosition());
+    //    原本的坐标可能已经在可视区之外，宠物会"消失"且无法抓回。
+    //    同时刷新渲染分辨率 —— 跨显示器 / 系统缩放变化后 devicePixelRatio 会改变，
+    //    不重新取一次会让画面在后一次显示时偏糊或偏锐。
+    this.registerDomEvent(window, 'resize', () => {
+      this.applyClampedPosition();
+      const size = this.currentSize();
+      this.scene?.resize(size, size);
+    });
   }
 
   onunload(): void {
@@ -108,7 +127,7 @@ export default class DesktopPetPlugin extends Plugin {
     this.settings.positionY = clamped.y;
 
     // 记录已应用快照（独立副本，后续 SettingsTab 的原地修改不会污染它）
-    this.appliedSettings = { ...this.settings };
+    this.appliedSettings = snapshotSettings(this.settings);
     // 若启用状态为 false，则初始隐藏
     if (!this.settings.enabled) {
       this.isVisible = false;
@@ -216,7 +235,7 @@ export default class DesktopPetPlugin extends Plugin {
 
     // 立即应用颜色
     scene.applyColor(this.settings.color);
-    this.appliedSettings = { ...this.settings };
+    this.appliedSettings = snapshotSettings(this.settings);
   }
 
   /** 切换显隐 */
@@ -234,10 +253,22 @@ export default class DesktopPetPlugin extends Plugin {
     void this.saveSettings();
   }
 
-  /** 注册状态栏图标 */
+  /**
+   * 注册状态栏图标。
+   *
+   * `addStatusBarItem()` 官方标注 **"Not available on mobile"**
+   * （obsidian.d.ts 的 Plugin.addStatusBarItem 注释），而本插件声明
+   * `isDesktopOnly: false`，移动端同样会执行 onload。这里加 Platform 守卫，
+   * 避免在根本没有状态栏的环境里去操作一个无效元素。
+   * 移动端仍可用命令面板 / 设置面板切换显隐。
+   */
   private registerStatusBar(): void {
+    if (!Platform.isDesktop) return;
     this.statusBarEl = this.addStatusBarItem();
-    this.statusBarEl.className = 'desktoppet-statusbar';
+    // 用 addClass 追加而不是整体赋值 className：addStatusBarItem() 会带上
+    // Obsidian 的基类 status-bar-item，整体赋值会把它顶掉，丢失状态栏的基础
+    // 布局与可点击态样式（此前只好在 styles.css 里手工补 padding / line-height）。
+    this.statusBarEl.addClass('desktoppet-statusbar');
     this.statusBarEl.setAttribute('aria-label', 'Toggle Desktop Pet');
     this.statusBarEl.innerHTML =
       '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">' +
@@ -262,7 +293,7 @@ export default class DesktopPetPlugin extends Plugin {
     const visibilityChanged = newSettings.enabled !== this.isVisible;
 
     this.settings = { ...newSettings };
-    this.appliedSettings = { ...newSettings };
+    this.appliedSettings = snapshotSettings(newSettings);
     this.scheduleSave();
 
     if (layoutChanged && this.containerEl && this.scene) {

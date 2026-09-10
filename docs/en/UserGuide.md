@@ -71,7 +71,8 @@
 
 | Software | Version |
 |---|---|
-| **OS** | Windows 10+ / macOS 11+ / Ubuntu 20.04+ (Linux requires Electron ≥ 20) |
+| **OS** | Windows 10+ / macOS 11+ / Ubuntu 20.04+ (Linux requires Electron ≥ 20); mobile iOS / iPadOS 14+, Android 10+ |
+| **Input** | Mouse / trackpad / touchscreen / stylus (unified through Pointer Events) |
 | **Obsidian** | 1.0.0+ (latest recommended) |
 | **GPU Drivers** | System drivers are fine (keep updated) |
 
@@ -92,10 +93,13 @@ cd desktoppet
 npm install
 npm run build
 
-# 3. Copy artifacts to your Obsidian vault
-#    (Windows example; adjust path for other OS)
-copy . C:\Users\YOUR_USERNAME\AppData\Roaming\Obsidian\<your-vault>\.obsidian\plugins\desktoppet\
+# 3. Copy the build artifacts into your Obsidian vault
+#    (Windows example; on macOS / Linux use cp or drag-and-drop)
+mkdir "C:\Users\YOUR_USERNAME\AppData\Roaming\Obsidian\<your-vault>\.obsidian\plugins\desktoppet"
+copy main.js styles.css manifest.json "C:\Users\YOUR_USERNAME\AppData\Roaming\Obsidian\<your-vault>\.obsidian\plugins\desktoppet\"
 ```
+
+> **Note**: `copy` cannot copy a directory (it fails with a syntax error). The command above copies only the 3 build artifacts — which is exactly the minimum the plugin needs. Don't drag `node_modules/` or `.git/` into your vault.
 
 ### Option 2: Manual Copy (Simplest)
 
@@ -126,7 +130,7 @@ Once the project is published to the Obsidian community plugin marketplace, you'
 ### Enabling the Plugin
 
 1. Obsidian Settings → Third-party plugins → find **Desktop Pet** → toggle on
-2. Once enabled, a 3D cartoon robot appears in the **top-left corner** of your window immediately
+2. Once enabled, a 3D cartoon robot appears on the **left side, in the upper area** (default coords `(20, 200)`) of your window immediately
 3. If you don't see it, the "show" toggle might be off by default — enable it in the settings panel
 
 ### Dragging the Pet
@@ -140,7 +144,7 @@ Once the project is published to the Obsidian community plugin marketplace, you'
 ### Clicking the Pet
 
 - **Single click** on the pet body triggers:
-  1. A **pulse** (scale 1.0 → 1.3 → 1.0, ~400ms)
+  1. A **pulse** (scale 1.0 → 1.3 → 1.0, ~450ms)
   2. **Eyes become crescent-shaped** (happy squint)
   3. A **speech bubble** appears above the head with a random phrase (10 options)
 
@@ -150,7 +154,7 @@ The bubble auto-dismisses after 2.2 seconds.
 
 Three ways — pick any:
 
-1. **Status bar**: a small robot icon in the bottom-right corner of Obsidian — click to toggle
+1. **Status bar**: a small robot icon in the bottom-right corner of Obsidian — click to toggle. **Desktop only** — Obsidian does not provide a status bar on mobile, so use the command palette or the settings panel there.
 2. **Command Palette**: `Ctrl+P` (Mac: `Cmd+P`) → search `Show/Hide Pet`
 3. **Settings panel**: Settings → Community plugins → Desktop Pet → "Enabled" toggle
 
@@ -229,9 +233,8 @@ Click **Reset to Defaults** to restore all settings:
 **Troubleshooting steps**:
 
 1. Settings → Desktop Pet → is the **Enabled** toggle on?
-2. Are you in **Reading View / Full-screen mode**? The pet may not show in reader tabs — switch back to edit mode
-3. Is the position pinned against a window edge? It is clamped into view automatically, so it shouldn't end up off-screen — click **Reset to Defaults** in the settings panel to restore it
-4. Open Obsidian's dev tools (`Ctrl+Shift+I`) and check the Console for red errors
+2. Is the position pinned against a window edge? It is clamped into view automatically, so it shouldn't end up off-screen — click **Reset to Defaults** in the settings panel to restore it
+3. Open Obsidian's dev tools (`Ctrl+Shift+I`) and check the Console for red errors
 
 ### Q2: The pet blocks my content?
 
@@ -258,14 +261,15 @@ If nothing happens, you probably edited the pet code without rebuilding — run 
 Theme switching affects:
 
 - Speech bubble background (`--background-secondary` CSS variable)
-- Shadow color (`--background-modifier-border`)
+- Speech bubble border (`--background-modifier-border`)
+- Shadow color — both the pet's drop shadow and the bubble's box shadow (`--background-modifier-box-shadow`)
 - The pet body color **does not** change with theme (controlled by primary color)
 
 If the pet body looks "jarring" after a theme switch, try a more neutral primary color (e.g. Soft Blue, Lavender).
 
 ### Q7: The plugin conflicts with some themes?
 
-The pet uses an **independent DOM layer** (attached to `document.body`), unaffected by theme CSS. If there's still a conflict:
+The pet uses an **independent DOM layer** (attached to `document.body`). The **pet body itself** is unaffected by theme CSS; only the speech bubble background and shadow follow theme variables (see Q6). If there's still a conflict:
 
 1. Disable your custom theme
 2. Check if another plugin modifies the `body` z-index

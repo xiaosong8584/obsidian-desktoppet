@@ -24,8 +24,8 @@
 - 💤 **Idle 动画** — 整体呼吸浮动、左右摇摆、眨眼（2.5~6 秒随机）、手臂自然摆动、天线晃动
 - 🎭 **5 种配色方案** — 柔和蓝、薄荷绿、珊瑚粉、薰衣草、暖橙
 - 📏 **尺寸调节** — 0.5x ~ 2.0x 滑块
-- 🌗 **明暗主题适配** — 气泡 & 阴影使用 Obsidian CSS 变量，自动跟随主题切换
-- 🎚️ **状态栏图标** — 一键切换显示 / 隐藏，也支持 `Ctrl+P` 命令面板
+- 🌗 **明暗主题适配** — 气泡与阴影使用 Obsidian CSS 变量（`--background-secondary`、`--background-modifier-box-shadow`），自动跟随主题切换
+- 🎚️ **状态栏图标** — 一键切换显示 / 隐藏，也支持 `Ctrl+P` 命令面板（状态栏仅桌面端提供）
 - 🔌 **完全透明背景** — 不遮挡 Obsidian 内容（外层 `pointer-events: none`，仅宠物本体可交互）
 - ♻️ **完整生命周期管理** — `onunload` 时释放 renderer / geometry / material / rAF / 事件
 
@@ -45,7 +45,7 @@
    ```bash
    npm run dev          # 监听模式：保存自动重编（不压缩，内联 sourcemap）
    npm run build        # 生产构建：tsc 类型检查 + 压缩 main.js
-   npm run build:dev    # 等同 `npm run dev`（监听模式）
+   npm run build:dev    # 一次性开发构建（不压缩，内联 sourcemap，构建完即退出）
    ```
 
 ## 📦 安装到 Obsidian
@@ -68,7 +68,7 @@
 ## 🎮 使用指南
 
 - **命令面板** — `Ctrl+P` → 搜索 "Show/Hide Pet"
-- **状态栏** — 右下角机器人图标，单击切换显隐
+- **状态栏** — 右下角机器人图标，单击切换显隐（仅桌面端）
 - **拖动** — 按住宠物拖动（鼠标 / 触屏 / 触控笔均可）到任意位置
 - **点击** — 单击宠物本体 → 缩放脉冲 + 弯眼 + 头顶气泡台词
 - **设置** — 设置 → 社区插件 → Desktop Pet

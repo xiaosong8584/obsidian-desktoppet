@@ -21,6 +21,19 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Verify tag matches manifest.json version
+        run: |
+          set -euo pipefail
+          tag_version="${GITHUB_REF_NAME#v}"
+          manifest_version="$(node -p "require('./manifest.json').version")"
+          echo "Tag version      : ${tag_version}"
+          echo "manifest version : ${manifest_version}"
+          if [ "${tag_version}" != "${manifest_version}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match manifest.json version ${manifest_version}. Bump manifest.json (and package.json) before tagging."
+            exit 1
+          fi
+          echo "✅ Tag matches manifest.json version"
+
       - name: Install dependencies
         run: npm ci
 

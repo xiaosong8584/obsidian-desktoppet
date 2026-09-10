@@ -92,10 +92,13 @@ cd desktoppet
 npm install
 npm run build
 
-# 3. 复制产物到你的 Obsidian vault
-#    （Windows 示例，其他系统按路径替换）
-copy . C:\Users\你的用户名\AppData\Roaming\Obsidian\<你的vault>\.obsidian\plugins\desktoppet\
+# 3. 把构建产物复制到你的 Obsidian vault
+#    （Windows 示例；macOS / Linux 用 cp 或直接拖拽）
+mkdir "C:\Users\你的用户名\AppData\Roaming\Obsidian\<你的vault>\.obsidian\plugins\desktoppet"
+copy main.js styles.css manifest.json "C:\Users\你的用户名\AppData\Roaming\Obsidian\<你的vault>\.obsidian\plugins\desktoppet\"
 ```
+
+> **注意**：`copy` 不能复制整个目录（会直接报语法错误）。上面只复制 3 个构建产物，这也正是插件运行所需的最小集合 —— 不要把 `node_modules/`、`.git/` 一起搬进 vault。
 
 ### 方式二：手动复制安装（最简单）
 
@@ -126,7 +129,7 @@ copy . C:\Users\你的用户名\AppData\Roaming\Obsidian\<你的vault>\.obsidian
 ### 启用插件
 
 1. Obsidian 设置 → 第三方插件 → 找到 **Desktop Pet** → 打开开关
-2. 插件启用后，窗口**左上角**会立即出现一个 3D 卡通机器人
+2. 插件启用后，窗口**左侧、偏上位置**（默认坐标 `(20, 200)`）会立即出现一个 3D 卡通机器人
 3. 如果没看到，可能是"显示开关"默认关闭，去设置面板开启
 
 ### 拖动宠物
@@ -140,7 +143,7 @@ copy . C:\Users\你的用户名\AppData\Roaming\Obsidian\<你的vault>\.obsidian
 ### 点击宠物
 
 - **单击**宠物本体，宠物会：
-  1. **脉冲**一下（缩放 1.0 → 1.3 → 1.0，约 400ms）
+  1. **脉冲**一下（缩放 1.0 → 1.3 → 1.0，约 450ms）
   2. **眼睛变成弯月形**（开心表情）
   3. **头顶冒出气泡**，随机显示一句台词（10 句随机）
 
@@ -150,7 +153,7 @@ copy . C:\Users\你的用户名\AppData\Roaming\Obsidian\<你的vault>\.obsidian
 
 三种方式任选：
 
-1. **状态栏**：Obsidian 右下角有个小机器人图标，单击切换
+1. **状态栏**：Obsidian 右下角有个小机器人图标，单击切换（**仅桌面端** —— Obsidian 移动端不提供状态栏，移动端请用命令面板或设置面板）
 2. **命令面板**：`Ctrl+P`（Mac: `Cmd+P`）→ 搜索 `Show/Hide Pet`
 3. **设置面板**：设置 → 社区插件 → Desktop Pet → "启用"开关
 
@@ -229,9 +232,8 @@ copy . C:\Users\你的用户名\AppData\Roaming\Obsidian\<你的vault>\.obsidian
 **排查顺序**：
 
 1. 设置面板 → Desktop Pet → **启用**开关是否打开？
-2. 是不是在**全屏阅读模式**下？宠物在阅读器标签页可能不显示，切回编辑模式试试
-3. 位置被窗口边界挤住了？位置会被自动裁剪到可视区内，一般不会跑到屏幕外——点设置面板的 **恢复默认** 即可复位
-4. 打开 Obsidian 的开发者工具（`Ctrl+Shift+I`）看控制台有没有红色报错
+2. 位置被窗口边界挤住了？位置会被自动裁剪到可视区内，一般不会跑到屏幕外——点设置面板的 **恢复默认** 即可复位
+3. 打开 Obsidian 的开发者工具（`Ctrl+Shift+I`）看控制台有没有红色报错
 
 ### Q2: 宠物挡住了我的内容？
 
@@ -258,14 +260,15 @@ copy . C:\Users\你的用户名\AppData\Roaming\Obsidian\<你的vault>\.obsidian
 明暗主题切换会影响：
 
 - 气泡背景色（使用 `--background-secondary` CSS 变量）
-- 阴影颜色（使用 `--background-modifier-border`）
+- 气泡描边色（使用 `--background-modifier-border`）
+- 阴影颜色 —— 宠物的投影与气泡的投影都使用 `--background-modifier-box-shadow`
 - 宠物本体颜色**不会**随主题变化（由主色控制）
 
 如果换主题后宠物本体看起来"突兀"，可以换一种更中性的主色（如柔和蓝、薰衣草）。
 
 ### Q7: 插件和某些主题冲突？
 
-宠物使用**独立 DOM 层**（挂到 `document.body`），不受主题 CSS 影响。如果确实冲突，可以尝试：
+宠物使用**独立 DOM 层**（挂到 `document.body`）。**宠物本体**不受主题 CSS 影响；只有气泡背景与阴影会跟随主题变量（见 Q6）。如果确实冲突，可以尝试：
 
 1. 关闭自定义主题
 2. 检查是否有其他插件修改了 `body` 的 z-index

@@ -79,7 +79,8 @@ export class SettingsTab extends PluginSettingTab {
     sizeSetting.addSlider((s) =>
       s.setLimits(0.5, 2.0, 0.05)
         .setValue(this.plugin.settings.petSize)
-        .setDynamicTooltip()
+        // 不调 setDynamicTooltip()：该 API 自 Obsidian 0.9.7 起废弃，
+        // 官方说明「数值现在总是内联显示」，调用它没有任何效果。
         .onChange((v: number) => {
           this.plugin.settings.petSize = v;
           this.plugin.updateSettings(this.plugin.settings);
@@ -137,16 +138,25 @@ export class SettingsTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('恢复默认设置')
       .setDesc('把宠物恢复到默认的大小、颜色与位置')
-      .addButton((b) =>
-        b.setButtonText('恢复默认')
-          .setWarning()
-          .onClick(() => {
-            this.plugin.settings = { ...DEFAULT_SETTINGS };
-            this.plugin.updateSettings(this.plugin.settings);
-            new Notice('已恢复默认设置');
-            // 一次性按钮，重建面板无副作用（这里不受滑块连续事件影响）
-            this.display();
-          })
-      );
+      .addButton((b) => {
+        b.setButtonText('恢复默认').onClick(() => {
+          this.plugin.settings = { ...DEFAULT_SETTINGS };
+          this.plugin.updateSettings(this.plugin.settings);
+          new Notice('已恢复默认设置');
+          // 一次性按钮，重建面板无副作用（这里不受滑块连续事件影响）
+          this.display();
+        });
+
+        // 样式：setWarning() 自 Obsidian 0.11.0 起废弃，官方替代是 setDestructive()，
+        // 但后者需要 Obsidian ≥ 1.13.0，而本插件 minAppVersion 是 1.0.0。
+        // 不为一个按钮配色抬高最低版本要求，所以做能力探测：新版本用新 API，
+        // 老版本退回旧 API。
+        const modern = b as { setDestructive?: () => unknown };
+        if (typeof modern.setDestructive === 'function') {
+          modern.setDestructive();
+        } else {
+          b.setWarning();
+        }
+      });
   }
 }
