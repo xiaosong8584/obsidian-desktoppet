@@ -134,8 +134,9 @@ $EDITOR package.json
 $EDITOR CHANGELOG.md
 
 # 3. 打 tag 并推送（自动触发 release.yml）
-git tag v1.0.0
-git push origin v1.0.0
+#    Obsidian 要求 tag 与 manifest.json 版本号一致，且不带 v 前缀
+git tag 1.0.0
+git push origin 1.0.0
 ```
 
 > 完整的发布流程见 [CHANGELOG.md#版本号约定](#版本号约定)。
