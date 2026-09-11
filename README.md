@@ -3,7 +3,7 @@
 > **Project**: <https://github.com/xiaosong8584/obsidian-desktoppet>
 
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
-![version](https://img.shields.io/badge/version-1.0.1-brightgreen.svg)
+![version](https://img.shields.io/badge/version-1.0.2-brightgreen.svg)
 ![obsidian](https://img.shields.io/badge/Obsidian-1.0+-blueviolet.svg)
 ![three.js](https://img.shields.io/badge/three.js-0.160-orange.svg)
 
@@ -79,7 +79,6 @@ Built with parametric geometry (Sphere / Cylinder / Capsule / Torus), **zero ext
 
 - [User Guide (English)](docs/en/UserGuide.md)
 - [用户使用指南（中文）](docs/zh-cn/UserGuide.md)
-- Release Guide: [English](docs/en/RELEASE.md) / [中文](docs/zh-cn/RELEASE.md)
 - [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security Policy](SECURITY.md)
 
 ## 🗂️ Project Structure
