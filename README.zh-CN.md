@@ -4,7 +4,7 @@
 
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 
-![version](https://img.shields.io/badge/version-1.0.1-brightgreen.svg)
+![version](https://img.shields.io/badge/version-1.0.2-brightgreen.svg)
 
 
 
@@ -84,7 +84,6 @@
 
 - [用户使用指南（中文）](docs/zh-cn/UserGuide.md)
 - [User Guide (English)](docs/en/UserGuide.md)
-- 发布指南：[中文](docs/zh-cn/RELEASE.md) / [English](docs/en/RELEASE.md)
 - [变更日志](CHANGELOG.md) · [贡献指南](CONTRIBUTING.md) · [安全政策](SECURITY.md)
 
 ## 🗂️ 项目结构

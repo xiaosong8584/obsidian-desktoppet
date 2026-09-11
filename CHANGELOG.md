@@ -137,4 +137,4 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-> 完整的发布流程见 [`docs/zh-cn/RELEASE.md`](docs/zh-cn/RELEASE.md)。
+> 完整的发布流程见 [CHANGELOG.md#版本号约定](#版本号约定)。
