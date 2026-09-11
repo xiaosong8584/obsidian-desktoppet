@@ -5,9 +5,10 @@
 
 ---
 
-## [Unreleased]
+## [1.0.2] - 2026-09-11
 
-（在此记录下一个版本的变更）
+- 修正文档的不一致性问题.
+- prepare of obsidian community release.
 
 ---
 
